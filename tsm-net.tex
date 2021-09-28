@@ -1,0 +1,75 @@
+\documentclass[12pt]{article}
+\usepackage[a4paper, total={6in, 8in}]{geometry}
+\usepackage{extsizes}
+\renewcommand{\baselinestretch}{1.5}
+
+\usepackage{fontspec}
+\setmainfont{Times New Roman}
+
+\usepackage{xeCJK}
+\setCJKmainfont{BiauKai}
+
+\usepackage{fullpage,graphicx,listings,xcolor,booktabs}
+\usepackage[hidelinks]{hyperref}
+\usepackage[small,bf]{caption}
+
+\definecolor{bgcolor}{rgb}{0.95,0.95,0.95}
+\lstdefinestyle{mystyle}{
+basicstyle=\footnotesize\ttfamily,
+backgroundcolor=\color{bgcolor},
+keywordstyle=\color{violet},
+stringstyle=\color{red},
+commentstyle=\color{gray},
+showstringspaces=false,
+numbers=left,
+frame=line
+}
+\lstset{
+style=mystyle,
+breaklines=true,
+postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space}
+}
+
+
+\bibliographystyle{acm}
+
+\begin{document}
+\begin{titlepage}
+\begin{center}
+\vspace*{2cm}
+{\bf \LARGE TSM-Net: 以對抗式時序壓縮自編碼器為基礎的\\音訊變速演算法} \\
+\vspace*{0.3cm}
+{\bf \LARGE TSM-Net: Temporal Compressing Autoencoder with Adversarial Losses for Time-Scale Modification on Audio Signals} \\[2cm]
+{\large 國立中山大學資訊工程學系} \\
+{\large 110 學年度大學部專題製作競賽} \\[2cm]
+{\large 組員：B073040018 朱劭璿} \\
+{\large \hspace{1.55cm}B072010029 陳居廷} \\[2cm]
+{\large 指導教師：陳嘉平 教授}
+\end{center}
+\end{titlepage}
+\newpage
+\begin{abstract}
+We proposed a novel approach in the field of time-scale modification on the audio signals. Our neural network model encodes the raw audio into a latent representation called neuralgram. We apply some existing image resizing techniques on the neuralgram and decode it using our neural decoder to obtain the time-scaled audio. Our method yields little artifacts and opens a new possibility in the research of modern time-scale modification.
+\end{abstract}
+\newpage
+\tableofcontents
+\newpage
+
+\section{Introduction}
+With the advance of technologies and digitalization, we can store and reproduce multimedia contents nowadays. We can even manipulate the materials in a way that we couldn't imagine before the digitalization. For example, image resizing and video editing, which changes the dimensionality of the digital pictures spatially and temporally, respectively. Another ubiquitous application regarding audio signals called time-scaled modification (TSM) is used in our daily life. It's also known as playback speed control in the video streaming platform such as YouTube.
+
+With the power of artificial intelligence (AI) and modern computation hardwares, however, we haven't discovered any approach using AI to refine TSM algorithm and leverage the quality of the synthetic audio to the next level. Consider we have pragmatic AI tools in similar domains like image super resolution and motion-compensated frame interpolation (MCFI).
+
+\subsection{Time-scale modification}
+The main idea of TSM is that instead of scaling the raw waveforms on the time axis, which leads to pitch shifts due to the changes of wavelengths, we frame a sequence of samples, typically larger than the wavelength of the lowest-frequency, and relocate these frames in a overlapping fashion. However, the resultant sound is usually non-natural and contains audible clipping artifacts, this is the negative effect of the framing technique.
+
+Another approach tries to manipulate the audio in the spectral space, using short-time Fourier transform (STFT) to convert the frequency informations from the raw waveform to a more semantic representation, specifically magnitudes and phases. Unfortunately, unlike the magnitudes, which gives constructive and straightforward audio features, the phases is relatively complicated and hard to model. Moreover, due to the heavily correlation between each phase bins, we have to carefully relocate these bins to avoid artifacts, a.k.a. phasiness.
+
+\subsection{Harnessing the power of neural networks}
+As we've mentioned above, the task requires a highly temporally compressed representation of the audio signals. The neural networks naturally come into our minds. The neural networks are composed of a sequence of linear transformation joined by nonlinear activation functions. With numerous configurable parameters, also known as weights, they are capable of approximating almost any function we desire, including the compression function that transform the raw audio waveforms into low-dimensional latent vectors and back.
+
+The parameters are initially random noises and can be gradually inferred using a technique called gradient descent, in which we specify a meaningful loss function such as the difference between the networks' output and the target value, then the parameters can be configured based on the gradients of the loss function so the output would slowly move toward the target value.
+
+To transform back and forth in two domains, we can think of the neural networks as an encoder and a decoder, in the jargon of machine learning, this kind of architecture is called autoencoder, which encodes the data into a high-level (and typically low-dimensional) latent vectors and tries its best to decode it back to the original data. In our neural network model, the dimension of the latent vectors is 1024 times smaller than the original one, which means one sample in the latent vector can represent more than an entire wave. Since the latent vector is an image-like multi-dimension vector, we can apply the existing image resizing techniques to scale it. Finally, we decode the resized latent vector to obtain the time-scaled audio waveform.
+
+\end{document}
