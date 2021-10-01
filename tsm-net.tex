@@ -12,6 +12,7 @@
 \usepackage{fullpage,graphicx,listings,xcolor,booktabs}
 \usepackage[hidelinks]{hyperref}
 \usepackage[small,bf]{caption}
+\setlength{\abovecaptionskip}{5pt plus 3pt minus 2pt}
 
 \definecolor{bgcolor}{rgb}{0.95,0.95,0.95}
 \lstdefinestyle{mystyle}{
@@ -74,7 +75,32 @@ As we've mentioned above, the task requires a highly temporally compressed repre
 To transform back and forth in two domains, we can think of the neural networks as an encoder and a decoder, in the jargon of machine learning, this kind of architecture is called autoencoder \cite{kra91}, which encodes the data into a high-level (and typically low-dimensional) latent vectors and tries its best to decode it back to the original data. In our neural network model, the dimension of the latent vectors is 1024 times smaller than the original one, which means one sample in the latent vector can represent more than an entire wave in the raw audio waveform. Since the latent vector is an image-like multi-dimension vector, we can apply the existing image resizing techniques to scale it. Finally, we decode the resized latent vector to obtain the time-scaled audio waveform.
 
 \paragraph{Distribution modeling}
-In order to generalize our model, we have to model the data distribution instead of directly measuring the L2 distance on the existing dataset, which leads to blurry output upon unseen data. Therefore, we employ a discriminative neural network to help us train the autoencoder \cite{goo14}. The discriminative network computes the adversarial loss, which measures how well it distinguishes the real and generated data.
+In order to make the model generalizes on the unseen data, we have to model the data distribution instead of directly measuring the L2 distance on the existing dataset, which leads to blurry output upon unseen data. Therefore, we employ a discriminative neural network to help us train the autoencoder \cite{goo14}. The discriminative network computes the adversarial loss, which measures how well it distinguishes the real and generated data. We will go into detail about the training objective and its effectiveness later.
+
+\section{Related Works}
+In this section, we summarize the existing methods on TSM, including time-domain ones and spectral-domain ones. We also study the neural vocoder used in text-to-speech (TTS) researches and how it differs from our model. 
+
+\subsection{Traditional TSM methods}
+\paragraph{Time-domain TSM}
+To prevent the pitch shifting during TSM, most TSM algorithms segment the audio into small chunks of fixed length, a.k.a frames or windows to keep the wavelength intact. In order to minimize the boundary breakage after processing, the adjacent frames are overlapped and rearranged to obtain the synthetic audio. As shown in Figure \ref{fig:1}. The original distance between the start of each frame is called analysis hopsize. After frame relocation, the distance becomes synthesis hopsize, and the ratio of the analysis hopsize and the synthesis hopsize is the rate at which the audio is speed up or down. In addition, the Hann window \cite{ess86} is applied to each analysis frame to maintain the amplitude of overlapped areas. The main challenge is the harmonic alignment problem, as shown in Figure \ref{fig:2}. With significant periodicities, an unconstrained ratio of the analysis to synthesis hopsize can cause a discrepancy with the original waveform. Specifically, the phases of the same frequency components in the frames do not synchronize properly, which leads to serious interference despite the identical waveforms.
+
+
+\begin{figure}
+\begin{center}
+  \includegraphics[width=.8\textwidth]{assets/figures/1}
+\end{center}
+\caption{Generic processing pipeline of time-domain time-scale modification (TSM) procedures.}
+\label{fig:1}
+\end{figure}
+
+\begin{figure}
+\begin{center}
+  \includegraphics[width=0.8\textwidth]{assets/figures/2}
+\end{center}
+\caption{An illustration for harmonic alignment problem. The red Hann windows indicate the rearrangement of the frames. An unconstrained scale ratio would leads to serious interference.}
+\label{fig:2}
+\end{figure}
+
 
 \bibliography{tsm-net}
 
