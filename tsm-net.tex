@@ -94,11 +94,11 @@ To transform back and forth in two domains, we can think of the neural networks 
 In order to make the model generalizes on the unseen data, we have to model the data distribution instead of directly measuring the L2 distance on the existing dataset, which leads to blurry output upon unseen data. Therefore, we employ a discriminative neural network to help us train the autoencoder \cite{goo14}. The discriminative network computes the adversarial loss, which measures how well it distinguishes the real and generated data. We will go into detail about the training objective and its effectiveness later.
 
 \section{Related Works}
-Modeling audio is not a trivial task for neural networks. To illustrate it, we can take image generation for example. DCGAN \cite{rad16} is a generative neural network which synthesizes realistic images with dimension of $3\times 64\times 64$. There are 12288 pixels that the model needs to estimate. A 5 seconds stereo audio clips with sample rate of 22050 Hz has $2\times 5 \times 22050 = 220500$ samples. Not to mention each pixel is stored in 8 bits while each audio sample is stored in 16 bits and has 256 times possible values than a image pixel.
+Modeling audio is not a trivial task for neural networks. To illustrate it, we can take image generation for example. DCGAN \cite{rad16} is a generative neural network which synthesizes realistic images with dimension of $3\times 64\times 64$. There are 12288 pixels that the model needs to estimate. A 5 seconds stereo audio clips with sampling rate of 22050 Hz has $2\times 5 \times 22050 = 220500$ samples. Not to mention each pixel is stored in 8 bits while each audio sample is stored in 16 bits and has 256 times possible values than a image pixel. Decreasing the sampling rate to simplify the dimensionality is another option. However, the Nyquist-Shannon sampling theorem suggests that the low sampling rate would lead to serious aliasing.
 
-\paragraph{Neural vocoder} Models that directly generate raw audio waveform are known as vocoder. A vocoder can be conditioned on some high-level abstract features such as linguistic features or spectrograms. The spectrogram is the magnitude part from the output of STFT. It expresses the frequency composition clearly and being easy to model thanks to its smooth variations over time. As mentioned above, the phases are relative hard to estimate, therefore in applications like text-to-speech (TTS) \cite{xu21} pipeline, the network often predicts the speech spectrogram of given texts, then uses a vocoder to get the raw audio. The early vocoders include Grinffin-Lim \cite{gri84}, WORLD \cite{mor16}, etc. The modern neural-based vocoders start with WaveNet \cite{aar16}, which predicts the distribution for each audio sample conditioned on all previous ones. However, the autoregressive model runs too slow to apply on real-time applications. FloWaveNet \cite{sun18} and WaveGlow \cite{pre19} are neural vocoders based on bipartite transforms. They present a faster inference speed and high quality synthetic audio but require larger models and more parameters to be as expressive as the autoregressive models, and thus harder to trained. WaveGAN \cite{chr18}, MelGAN \cite{kun19} and VocGAN \cite{yan20} employ the generative adversarial network \cite{goo14} training architecture in which a discriminator is used to measure the divergence of synthetic audio and the real audio and try to learn the generator optimal weights to make the synthetic audio as realistic as possible. The discriminator usually works in multiple scales in order to take care of different frequency bands in the audio data. This kind of approach allows small models to generate high fidelity audio samples.
+\subsection{Neural vocoder} Models that directly generate raw audio waveform are known as vocoder. A vocoder can be conditioned on some high-level abstract features such as linguistic features or spectrograms. The spectrogram is the magnitude part from the output of STFT. It expresses the frequency composition clearly and being easy to model thanks to its smooth variations over time. As mentioned above, the phases are relative hard to estimate, therefore in applications like text-to-speech (TTS) \cite{xu21} pipeline, the network often predicts the speech spectrogram of given texts, then uses a vocoder to get the raw audio. The early vocoders include Grinffin-Lim \cite{gri84}, WORLD \cite{mor16}, etc. The modern neural-based vocoders start with WaveNet \cite{aar16}, which predicts the distribution for each audio sample conditioned on all previous ones. However, the autoregressive model runs too slow to apply on real-time applications. FloWaveNet \cite{sun18} and WaveGlow \cite{pre19} are neural vocoders based on bipartite transforms. They present a faster inference speed and high quality synthetic audio but require larger models and more parameters to be as expressive as the autoregressive models, and thus harder to trained. WaveGAN \cite{chr18}, MelGAN \cite{kun19} and VocGAN \cite{yan20} employ the generative adversarial network \cite{goo14} training architecture in which a discriminator is used to measure the divergence of synthetic audio and the real audio and try to learn the generator optimal weights to make the synthetic audio as realistic as possible. The discriminator usually works in multiple scales in order to take care of different frequency bands in the audio data. This kind of approach allows small models to generate high fidelity audio samples.
 
-\paragraph{Nyquist-Shannon sampling theorem} The sampling rate is the number of samples per seconds that a signal is recorded, and the bit depth is the amplitude precision in which each sample is stored. The analog continuous signal has to be discretized and quantized in order to be stored digitally in the computer. Specifically, discretization and quantization transfer continuous signals into discrete counterparts along the time and amplitude axis, repectively. Common combinations include 44100Hz/24bit, 22050Hz/16bit, 16000Hz/16bit, etc. A lower sampling rate results in lower data dimension, which is beneficial for reducing modeling complexity. However, a lower sampling rate is easier to produce aliasing. The aliasing is a phenomenon where two different signals alias one another in the discrete domain as illustrated in Figure \ref{fig:3}. As pointed out and proven by Nyquist \cite{nyq28} and Shannon \cite{sha48}, a signal containing no frequency higher or equal than $\omega$Hz, is completely determined by sampling at $2\omega$Hz, i.e., to resolve all frequencies in a signal, it has to be sampled at strictly greater than twice the highest frequency present. Otherwise, the discrete representation cannot determine some high-frequency components which have low-frequency aliases. The aliasing sometimes happens in the real world where some sensory 
+\subsection{Nyquist-Shannon sampling theorem} The sampling rate is the number of samples per seconds that a signal is recorded, and the bit depth is the amplitude precision in which each sample is stored. The analog continuous signal has to be discretized and quantized in order to be stored digitally in the computer. Specifically, discretization and quantization transfer continuous signals into discrete counterparts along the time and amplitude axis, repectively. Common combinations include 44100Hz/24bit, 22050Hz/16bit, 16000Hz/16bit, etc. A lower sampling rate results in lower data dimension, which is beneficial for reducing modeling complexity. However, a lower sampling rate is easier to produce aliasing. The aliasing is a phenomenon where two different signals alias one another in the discrete domain as illustrated in Figure \ref{fig:3}. As pointed out and proven by Nyquist \cite{nyq28} and Shannon \cite{sha48}, a signal containing no frequency higher or equal than $\omega$Hz, is completely determined by sampling at $2\omega$Hz, i.e., to resolve all frequencies in a signal, it has to be sampled at strictly greater than twice the highest frequency present. Otherwise, the discrete representation cannot determine some high-frequency components which have low-frequency aliases. The aliasing sometimes happens in the real world where some human sensory organs have preceptive limitations. For examples, human eyes can only see about 30 to 60 frames per seconds. For cars driven in a very high speed, the wheels spin too fast to be correctly perceived by human eyes, as if they're spinning backwards. This is known as the wagon-wheel effect. Another example is the moiré pattern. It can be usually observed on the photographs of digital monitors. The resolution of the camera is not high enough to capture the pixels on the monitors and leads to artificial patterns.
 
 \begin{figure}
 \begin{center}
@@ -141,6 +141,105 @@ Modeling audio is not a trivial task for neural networks. To illustrate it, we c
 \caption{An illustration for aliasing. Suppose the signals are sampled non-uniformly for better illustration, two signals with different frequency components are the aliases for each other in the discrete domain, represented as black dots.}
 \label{fig:3}
 \end{figure}
+
+\section{Methodology}
+
+\subsection{Latent representation}
+We proposed a new representation for audio called neuralgram to provide a novel approach to TSM. The neuralgram is a temporally compressed feature map extracted from the middle of an neural autoencoder. A neuralgram is applicable on TSM only when the following exists.
+\begin{enumerate}
+  \item{An encoder-decoder pair that is capable of fairly reconstructing the raw waveform.}
+  \item{A compression ratio that is high enough to put an entire wave of the lowest frequency present into one sample in the neuralgram}
+\end{enumerate}
+
+Instead of directly scaling on the raw waveform, which leads to the pitch shifting, we encode the raw waveform as a real-valued neuralgram and scale the neuralgram. Finally, we decode the scaled neuralgram to get time-scaled audio without pitch shifting, as illustated in Figure \ref{fig:4}.
+
+
+\begin{figure}
+\begin{center}
+\begin{tabular}{l}
+(a)
+\begin{tikzpicture}
+\begin{axis}[
+  domain=0:3.14,
+  axis lines = left,
+  legend pos=outer north east,
+  width=4cm,
+  height=2cm,
+  scale only axis,
+]
+\addplot [
+  samples=100, 
+  color=red,
+]
+{sin(deg(2*x))};
+
+\end{axis}
+\end{tikzpicture}
+
+(b)
+\begin{tikzpicture}
+\begin{axis}[
+  domain=0:6.28,
+  axis lines = left,
+  legend pos=outer north east,
+  width=8cm,
+  height=2cm,
+  scale only axis,
+]
+\addplot [
+  samples=100, 
+  color=red,
+]
+{sin(deg(x))};
+
+\end{axis}
+\end{tikzpicture} \\
+
+(c)
+\begin{tikzpicture}
+\begin{axis}[
+  domain=0:3.14,
+  axis lines = left,
+  legend pos=outer north east,
+  width=4cm,
+  height=2cm,
+  scale only axis,
+]
+\addplot [
+  samples=100, 
+  color=blue,
+]
+{sin(deg(2*x))};
+
+\end{axis}
+\end{tikzpicture}
+
+(d)
+\begin{tikzpicture}
+\begin{axis}[
+  domain=0:6.28,
+  axis lines = left,
+  legend pos=outer north east,
+  width=8cm,
+  height=2cm,
+  scale only axis,
+]
+\addplot [
+  samples=100, 
+  color=blue,
+]
+{sin(deg(2*x))};
+
+\end{axis}
+\end{tikzpicture}
+
+\end{tabular}
+\end{center}
+\caption{An illustration for the desire TSM. The original signal contains the sinusoid for a single frequency (a,c). The erroneous siganl (b) is the result of directly scaling on the raw waveform, which changes the wavelength of the sinusoid and produces pitch shifting. The desired behavior (d) can be achieved by scaling on the neuralgram, which compresses the entire sinusoid into one sample.}
+\label{fig:4}
+\end{figure}
+
+
 
 \bibliography{tsm-net}
 
