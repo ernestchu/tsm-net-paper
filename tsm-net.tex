@@ -6,13 +6,14 @@
 \usepackage{fontspec}
 \setmainfont{Times New Roman}
 
-\usepackage{xeCJK}
+\usepackage[BoldFont, SlantFont]{xeCJK}
 \setCJKmainfont{BiauKai}
 
-\usepackage{fullpage,graphicx,listings,xcolor,booktabs}
+\usepackage{fullpage,graphicx,listings,xcolor,booktabs,pgfplots}
 \usepackage[hidelinks]{hyperref}
 \usepackage[small,bf]{caption}
 \setlength{\abovecaptionskip}{2pt plus 2pt minus 2pt}
+\usetikzlibrary{intersections}
 
 \definecolor{bgcolor}{rgb}{0.95,0.95,0.95}
 \lstdefinestyle{mystyle}{
@@ -62,7 +63,7 @@ With the power of artificial intelligence (AI) and modern computation hardwares,
 
 \subsection{Time-scale modification}
 \paragraph{Time-domain approach}
-The main idea of TSM is that instead of scaling the raw waveforms on the time axis, which leads to pitch shifts due to the changes of wavelengths, we segment the audio into small chunks of fixed length, a.k.a frames or windows to keep the wavelength intact. In order to minimize the boundary breakage after processing, the adjacent frames are overlapped and rearranged to obtain the synthetic audio. As shown in Figure \ref{fig:1}. The original distance between the start of each frame is called analysis hopsize. After frame relocation, the distance becomes synthesis hopsize, and the ratio of the analysis hopsize and the synthesis hopsize is the rate at which the audio is speed up or down. In addition, the Hann window \cite{ess86} is applied to each analysis frame to maintain the amplitude of overlapped areas. The main challenge is the harmonic alignment problem, as shown in Figure \ref{fig:2}. With significant periodicities, an unconstrained ratio of the analysis to synthesis hopsize can cause a discrepancy with the original waveform. Specifically, the phases of the same frequency components in the frames do not synchronize properly, which leads to serious interference despite the identical waveforms. Several enhancements have been proposed to solve the synchronization problem \cite{hej91}\cite{eri90}\cite{ver93}. However, the resultant sound is usually non-natural and contains audible clipping artifacts. This is the negative effect of the framing technique. Moreover, the time-domain TSM only preserve the most prominent periodicity. For the audio with a wide range of frequencies composition, like pop music, symphony and orchestra, the less prominent sound are often erased in the process.
+The main idea of TSM is that instead of scaling the raw waveforms on the time axis, which leads to pitch shifts due to the changes of wavelengths, we segment the audio into small chunks of fixed length, a.k.a frames or windows to keep the wavelength intact. In order to minimize the boundary breakage after processing, the adjacent frames are overlapped and rearranged to obtain the synthetic audio. As shown in Figure \ref{fig:1}. The original distance between the start of each frame is called analysis hopsize. After frame relocation, the distance becomes synthesis hopsize, and the ratio of the analysis hopsize and the synthesis hopsize is the rate at which the audio is speed up or down \cite{dri16}. In addition, the Hann window \cite{ess86} is applied to each analysis frame to maintain the amplitude of overlapped areas. The main challenge is the harmonic alignment problem, as shown in Figure \ref{fig:2}. With significant periodicities, an unconstrained ratio of the analysis to synthesis hopsize can cause a discrepancy with the original waveform. Specifically, the phases of the same frequency components in the frames do not synchronize properly, which leads to serious interference despite the identical waveforms. Several enhancements have been proposed to solve the synchronization problem \cite{hej91}\cite{eri90}\cite{ver93}. However, the resultant sound is usually non-natural and contains audible clipping artifacts. This is the negative effect of the framing technique. Moreover, the time-domain TSM only preserve the most prominent periodicity. For the audio with a wide range of frequencies composition, like pop music, symphony and orchestra, the less prominent sound are often erased in the process.
 
 \begin{figure}
 \begin{center}
@@ -81,7 +82,7 @@ The main idea of TSM is that instead of scaling the raw waveforms on the time ax
 \end{figure}
 
 \paragraph{Spectral-domain approach}
-Another approach tries to manipulate the audio in the spectral space, using short-time Fourier transform (STFT) to convert the frequency informations from the raw waveform to a more semantic representation with complex numbers \cite{lar99}. The magnitude and phase parts can be further derived. Unfortunately, unlike the magnitudes, which gives constructive and straightforward audio features, the phases is relatively complicated and hard to model. Moreover, due to the heavily correlation between each phase bins, we have to use phase vocoder \cite{fla66} to estimate phases after carefully relocate STFT bins to avoid a peculiar artifacts, a.k.a. phasiness. Despite some refined methods \cite{kra12}\cite{moi11}\cite{nag09}, the spectral representation is essentially not directly scalable, and the iterative phase propagation in the phase vocoder is an inevitable overhead.
+Another approach tries to manipulate the audio in the spectral space, using short-time Fourier transform (STFT) to convert the frequency informations in the raw waveform to a more semantic representation with complex numbers \cite{lar99}. The magnitude and phase parts can be further derived. Unfortunately, unlike the magnitudes, which gives constructive and straightforward audio features, the phases is relatively complicated and hard to model. Moreover, due to the heavily correlation between each phase bins, we have to use phase vocoder \cite{fla66} to estimate phases and the instantaneous frequencies after carefully relocate STFT bins to avoid a peculiar artifacts, a.k.a. phasiness. Despite some refined methods \cite{kra12}\cite{moi11}\cite{nag09}, which improve both the vertical and horizontal phase coherence, the spectral representation is essentially not directly scalable, and the iterative phase propagation process in the phase vocoder is an inevitable overhead.
 
 \subsection{Harnessing the power of neural networks}
 As we've mentioned above, the task requires a highly temporally compressed representation of the audio signals. The neural networks naturally come into our minds. The neural networks are composed of a sequence of linear transformation joined by nonlinear activation functions. With numerous configurable parameters, also known as weights, they are capable of approximating almost any function we desire, including the compression function that transform the raw audio waveforms into low-dimensional latent vectors and back. The parameters are initially random noises and can be gradually inferred using a technique called gradient descent, in which we specify a meaningful loss function such as the difference between the networks' output and the target value, then the parameters can be configured based on the gradients of the loss function so the output would slowly move toward the target value.
@@ -93,8 +94,53 @@ To transform back and forth in two domains, we can think of the neural networks 
 In order to make the model generalizes on the unseen data, we have to model the data distribution instead of directly measuring the L2 distance on the existing dataset, which leads to blurry output upon unseen data. Therefore, we employ a discriminative neural network to help us train the autoencoder \cite{goo14}. The discriminative network computes the adversarial loss, which measures how well it distinguishes the real and generated data. We will go into detail about the training objective and its effectiveness later.
 
 \section{Related Works}
-In this section, we summarize the existing methods on TSM, including time-domain ones and spectral-domain ones. We also study the neural vocoder used in text-to-speech (TTS) researches and how it differs from our model. 
+Modeling audio is not a trivial task for neural networks. To illustrate it, we can take image generation for example. DCGAN \cite{rad16} is a generative neural network which synthesizes realistic images with dimension of $3\times 64\times 64$. There are 12288 pixels that the model needs to estimate. A 5 seconds stereo audio clips with sample rate of 22050 Hz has $2\times 5 \times 22050 = 220500$ samples. Not to mention each pixel is stored in 8 bits while each audio sample is stored in 16 bits and has 256 times possible values than a image pixel.
 
+\paragraph{Neural vocoder} Models that directly generate raw audio waveform are known as vocoder. A vocoder can be conditioned on some high-level abstract features such as linguistic features or spectrograms. The spectrogram is the magnitude part from the output of STFT. It expresses the frequency composition clearly and being easy to model thanks to its smooth variations over time. As mentioned above, the phases are relative hard to estimate, therefore in applications like text-to-speech (TTS) \cite{xu21} pipeline, the network often predicts the speech spectrogram of given texts, then uses a vocoder to get the raw audio. The early vocoders include Grinffin-Lim \cite{gri84}, WORLD \cite{mor16}, etc. The modern neural-based vocoders start with WaveNet \cite{aar16}, which predicts the distribution for each audio sample conditioned on all previous ones. However, the autoregressive model runs too slow to apply on real-time applications. FloWaveNet \cite{sun18} and WaveGlow \cite{pre19} are neural vocoders based on bipartite transforms. They present a faster inference speed and high quality synthetic audio but require larger models and more parameters to be as expressive as the autoregressive models, and thus harder to trained. WaveGAN \cite{chr18}, MelGAN \cite{kun19} and VocGAN \cite{yan20} employ the generative adversarial network \cite{goo14} training architecture in which a discriminator is used to measure the divergence of synthetic audio and the real audio and try to learn the generator optimal weights to make the synthetic audio as realistic as possible. The discriminator usually works in multiple scales in order to take care of different frequency bands in the audio data. This kind of approach allows small models to generate high fidelity audio samples.
+
+\paragraph{Nyquist-Shannon sampling theorem} The sampling rate is the number of samples per seconds that a signal is recorded, and the bit depth is the amplitude precision in which each sample is stored. The analog continuous signal has to be discretized and quantized in order to be stored digitally in the computer. Specifically, discretization and quantization transfer continuous signals into discrete counterparts along the time and amplitude axis, repectively. Common combinations include 44100Hz/24bit, 22050Hz/16bit, 16000Hz/16bit, etc. A lower sampling rate results in lower data dimension, which is beneficial for reducing modeling complexity. However, a lower sampling rate is easier to produce aliasing. The aliasing is a phenomenon where two different signals alias one another in the discrete domain as illustrated in Figure \ref{fig:3}. As pointed out and proven by Nyquist \cite{nyq28} and Shannon \cite{sha48}, a signal containing no frequency higher or equal than $\omega$Hz, is completely determined by sampling at $2\omega$Hz, i.e., to resolve all frequencies in a signal, it has to be sampled at strictly greater than twice the highest frequency present. Otherwise, the discrete representation cannot determine some high-frequency components which have low-frequency aliases. The aliasing sometimes happens in the real world where some sensory 
+
+\begin{figure}
+\begin{center}
+
+\begin{tikzpicture}
+\begin{axis}[
+  domain=0:10,
+  axis lines = left,
+  legend pos=outer north east,
+  xlabel = \(x\),
+  ylabel = {\(f(x)\)},
+  width=8cm,
+  height=2cm,
+  scale only axis,
+]
+\addplot [
+  name path=p1,
+  samples=100, 
+  color=red,
+]
+{sin(deg(x))};
+\addlegendentry{$\sin(x)$}
+\addplot [
+  name path=p2,
+  samples=100, 
+  color=blue,
+]
+{sin(deg(2*x))};
+\addlegendentry{$\sin(2x)$}
+
+\fill 
+  [name intersections={of=p1 and p2, name=i, total=\t}] 
+  [black, opacity=1] 
+  \foreach \s in {1,...,\t}{(i-\s) circle (2pt)};
+
+\end{axis}
+\end{tikzpicture}
+
+\end{center}
+\caption{An illustration for aliasing. Suppose the signals are sampled non-uniformly for better illustration, two signals with different frequency components are the aliases for each other in the discrete domain, represented as black dots.}
+\label{fig:3}
+\end{figure}
 
 \bibliography{tsm-net}
 
