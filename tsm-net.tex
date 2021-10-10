@@ -286,16 +286,20 @@ We train our model with Tesla P100 on four Datasets, including FMA \cite{kir16},
 \subsection{Training techniques}
 The model is easy to train, taking around a weeks to train from scratch. However, it's not guaranteed to converge in every runs. A successfully converged run is shown in Figure \ref{fig:healthy-d}. A healthy loss for discriminator tend to fluctuate around 6. As long as the discriminator's loss decreases drastically, neither the autoencoder's loss nor the feature matching loss is able to return to a healthy value and diverges quickly, thus leading to poor quality. We can double check this phenomenon from the AR and NR. Both reconstruction losses increase after the discriminator dominates the training. We can also perceive notable background noises in the reconstructed audio samples.
 
-\paragraph{A broken example} Sometimes, the model won't converge at all. As shown in Figure \ref{fig:broken-nr}, the NR loss becomes zero after 5 thousands iterations. Intuitively, no matter how good a model is, it's nearly impossible to have a loss of zero. Therefore in this case, the model is not optimized. On the contrary, the encoder discards the conditions and generates the same noisy Neuralgram regardless of the input. The reconstructed audio also only contains the same noise no matter what input is fed into the model. This failure mostly happens on the FMA dataset, which contains lots of Pop music. We suspect the wide frequency range in the Pop music makes it more difficult to train from scratch. We try to pre-train the autoencoder or the discriminator on the Classical music dataset, Musicnet. A pre-trained autoencoder succeeds in making the discriminator's loss stable via transfer learning. On the contrary, a pre-trained discriminator cannot guide the autoencoder to perform proper reconstruction.
+\paragraph{Broken example} Sometimes, the model won't converge at all. As shown in Figure \ref{fig:broken-nr}, the NR loss becomes zero after 5 thousands iterations. Intuitively, no matter how good a model is, it's nearly impossible to have a loss of zero. Therefore in this case, the model is not optimized. On the contrary, the encoder discards the conditions and generates the same noisy Neuralgram regardless of the input. The reconstructed audio also only contains the same noise no matter what input is fed into the model. This failure mostly happens on the FMA dataset, which contains lots of Pop music. We suspect that the wide frequency range in the Pop music makes it more difficult to train from scratch. We try to pre-train the autoencoder or the discriminator on the Classical music dataset, Musicnet. A pre-trained autoencoder succeeds in making the discriminator's loss stable via transfer learning. On the contrary, a pre-trained discriminator cannot guide the autoencoder to perform proper reconstruction.
 
 \begin{figure}
 \begin{center}
   \includegraphics[width=\textwidth]{assets/figures/broken-nr}
 \end{center}
-\caption{A broken training run.}
+\caption{A broken training run. The NR loss becomes zero after 5 thousands iterations.}
 \label{fig:broken-nr}
 \end{figure}
 
+\subsection{Study on different compressing ratios}
+As mentioned above, a compressing ratio (CR) of 1024$\times$ is large enough for the lowest perceivable frequency. We want to see whether a lower CR leads to the pitch shifting in TSM. We examine different models with CR of 256$\times$, 512$\times$ and the original 1024$\times$. Intuitively, the lower CR should provide smaller reconstruction errors, since the latent space is closer to the original data space. As expected, the pitch shifting gradually presents as the frequency goes down, and it seldom happens in the high frequencies. The smaller the CR, the higher frequency the pitch shifting spreads.
+
+\section{Conclusion}
 
 
 \bibliography{tsm-net}
