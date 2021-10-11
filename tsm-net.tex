@@ -280,7 +280,7 @@ where $D_k^{(i)}$ represents the $i$th layer's feature map output of the $k$th d
 where $x$ represents the raw audio waveform, $A$ represents the autoencoder, and $D_k$ represents each discriminator. According to \cite{mat16} and \cite{iso17}, the noise input is not necessary when the conditioning information is very strong in the generative model.
 
 \section{Experiment}
-We train our model with Tesla P100 on four Datasets, including FMA \cite{kir16}, Musicnet \cite{joh18}, VCTK \cite{yam19} and the audio from the Data Structure class recording \cite{chu21} lectured by Prof. C.B. Yang, NSYSU. All of the audio are resampled to 22050Hz. The audio samples can be found on our website\footnote{\url{https://dodoron241237.github.io/tsm-net-demo/}.}. We also use two additional metrics to monitor our training but they are not included in the training losses.
+We train our model with Tesla P100 on four Datasets, including FMA \cite{kir16}, Musicnet \cite{joh18}, VCTK \cite{yam19} and the audio from the Data Structure class recording \cite{chu21} lectured by Prof. C.B. Yang, NSYSU. All of the audio are resampled to 22050Hz. The audio samples can be found on our website\footnote{\url{https://ernestchu.github.io/tsm-net-demo/}.}. We also use two additional metrics to monitor our training but they are not included in the training losses.
 \begin{enumerate}
   \item{Audio Reconstruction (AR). AR is the L1 norm between the real and reconstructed raw audio waveform}
   \item{Neuralgram Reconstruction (NR). NR is the L1 norm between the Neuralgrams encoded from the real and reconstructed raw audio waveform, i.e., the reconstructed Neuralgram has 1.5 passes through the autoencoder.}
