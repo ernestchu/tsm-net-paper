@@ -17,7 +17,7 @@ make clean all
 ### Auto build on file change
 
 ```sh
-make latexmk
+make watch
 ```
 
 Note that this do not copy the PDF file out of the build directory.
